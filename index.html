@@ -8,9 +8,12 @@
 </head>
 <body>
   <nav>
-    <button data-view="bar">ICC Trophies</button>
-    <button data-view="scatter">Top Batting Averages</button>
-  </nav>
+  <button data-view="bar">ICC Trophies</button>
+  <button data-view="scatter">Top Batting Averages</button>
+  <button data-view="sankey">IPL Highest Scores</button>
+  <button data-view="pie">IPL Runs by Team</button> <!-- NEW -->
+</nav>
+
 
   <!-- Bar Chart Filter -->
   <div id="bar-controls" style="text-align:center; margin:12px 0;">
@@ -37,26 +40,40 @@
   <svg id="bar"     width="780" height="600"></svg>
   <svg id="scatter" width="780" height="600" style="display:none"></svg>
   <div id="scatter-legend"></div>
+<!-- Sankey Chart -->
+<svg id="sankey" width="900" height="600" style="display:none"></svg>
+<svg id="pie" width="780" height="600" style="display:none"></svg>
 
   <!-- Modules -->
   <script type="module" src="js/bar.js"></script>
   <script type="module" src="js/scatter.js"></script>
+<script type="module" src="js/sankey.js"></script>
+<script type="module" src="js/pie.js"></script>
+
 
   <!-- View toggle logic -->
   <script>
-    document.querySelectorAll('nav button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const view = btn.dataset.view;
-        document.getElementById('bar').style.display     = view === 'bar'     ? '' : 'none';
-        document.getElementById('bar-controls').style.display     = view === 'bar'     ? '' : 'none';
-        document.getElementById('scatter').style.display = view === 'scatter' ? '' : 'none';
-        document.getElementById('scatter-controls').style.display = view === 'scatter' ? '' : 'none';
+  const views = ["bar", "scatter", "sankey", "pie"];
+
+  document.querySelectorAll('nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const view = btn.dataset.view;
+
+      views.forEach(v => {
+        const chart = document.getElementById(v);
+        const controls = document.getElementById(v + "-controls");
+
+        if (chart) chart.style.display = (v === view) ? "" : "none";
+        if (controls) controls.style.display = (v === view) ? "" : "none";
       });
     });
-    // On load, show bar view by
-    window.addEventListener('DOMContentLoaded', () => {
-      document.querySelector('button[data-view="bar"]').click();
-    });
-  </script>
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('button[data-view="bar"]').click();
+  });
+</script>
+
+
 </body>
 </html>
