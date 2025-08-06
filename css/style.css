@@ -1,3 +1,6 @@
+/* ------------------------------------------------------------
+   Base Layout & Typography
+------------------------------------------------------------ */
 body {
   font-family: "Segoe UI", sans-serif;
   margin: 0;
@@ -5,26 +8,59 @@ body {
   background: #f5f7fa;
 }
 
+/* ------------------------------------------------------------
+   Navigation Bar
+------------------------------------------------------------ */
+/* ------------------------------------------------------------
+   Enhanced Navigation Bar
+------------------------------------------------------------ */
 nav {
-  padding: 10px;
-  background: #1b9e77;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 0;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 nav button {
-  margin: 0 6px;
-  padding: 6px 14px;
+  background: transparent;
   border: none;
-  border-radius: 5px;
+  padding: 8px 16px;
+  font-size: 16px;
   font-weight: 600;
-  cursor: pointer;
-  background: #fff;
-  color: #1b9e77;
+  color: #555;
+  border-radius: 20px;
+  position: relative;
+  transition: color 0.2s ease;
 }
 
 nav button:hover {
-  background: #e1f3ef;
+  color: #1b9e77;
 }
 
+nav button.active {
+  color: #1b9e77;
+}
+
+nav button.active::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;
+  height: 3px;
+  background: #1b9e77;
+  border-radius: 2px;
+}
+
+/* ------------------------------------------------------------
+   SVG Containers
+------------------------------------------------------------ */
 svg {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
   border-radius: 12px;
@@ -32,69 +68,83 @@ svg {
   margin-top: 12px;
 }
 
-#scatter-legend {
-  margin-top: 6px;
+/* ------------------------------------------------------------
+   Controls (Dropdowns, Checkboxes, Instructions)
+------------------------------------------------------------ */
+.controls {
   text-align: center;
-  font-size: 13px;
-}
-#scatter-legend .box {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 4px;
-  vertical-align: middle;
-}
-
-#bar-controls, #scatter-controls {
+  margin: 12px 0;
   font-family: "Segoe UI", sans-serif;
   font-size: 14px;
 }
-
-#bar-controls select {
+.controls label {
+  font-weight: 600;
+  margin-right: 8px;
+}
+.controls select,
+.controls input[type="checkbox"] {
+  cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
   border: 1px solid #ccc;
 }
 
-#scatter-controls input {
-  margin: 0 4px 0 12px;
-}
-
-#scatter-legend {
+/* ------------------------------------------------------------
+   Legends
+------------------------------------------------------------ */
+#scatter-legend,
+#pie-legend {
   margin-top: 6px;
   text-align: center;
   font-size: 13px;
 }
-
-#scatter-legend .box {
+#scatter-legend .box,
+#pie-legend .box {
   display: inline-block;
   width: 12px;
   height: 12px;
   margin-right: 4px;
   vertical-align: middle;
+  border-radius: 2px;
 }
 
-/* Bar and scatter tooltips */
+/* ------------------------------------------------------------
+   Tooltips
+------------------------------------------------------------ */
+/* Bar and scatter tooltips (text elements) */
 .bar-tooltip,
 .scatter-tooltip text {
   pointer-events: none;
   fill: #333;
   font-family: "Segoe UI", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+/* Sankey & Pie tooltips (g groups containing rect+text) */
+.sankey-tooltip text,
+.pie-tooltip text {
+  pointer-events: none;
+  fill: #333;
+  font-family: "Segoe UI", sans-serif;
+}
+.sankey-tooltip rect,
+.pie-tooltip rect {
+  fill: #fff;
+  stroke: #333;
+  rx: 4;
+  ry: 4;
 }
 
-/* Hover cursors */
+/* ------------------------------------------------------------
+   Interactivity Cursors & Highlighting
+------------------------------------------------------------ */
 svg rect:hover,
-svg circle:hover {
+svg circle:hover,
+svg path:hover {
   cursor: pointer;
 }
-
-/* Highlighted circle stroke */
-svg circle.selected {
+svg circle.selected,
+svg path.selected {
   stroke: #000;
   stroke-width: 2px;
-}
-
-/* Legend & control styling (if not already present) */
-#bar-controls select, #scatter-controls input {
-  cursor: pointer;
 }
