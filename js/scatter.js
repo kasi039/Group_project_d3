@@ -1,21 +1,38 @@
 // js/scatter.js
-import { loadData }    from "./main.js";
+import { loadData } from "./main.js";
 import { buildScatter } from "./scatterChart.js";
 
-export async function drawScatter() {
-  const { averages } = await loadData();
-  const testChk = document.getElementById("testChk");
-  const odiChk  = document.getElementById("odiChk");
+let averages = [];
+let countryFilter = null; // set via bar chart clicks
 
-  function update() {
-    const formats = [];
-    if (testChk.checked) formats.push("Test");
-    if (odiChk.checked)  formats.push("ODI");
-    buildScatter(averages.filter(d => formats.includes(d.format)));
-  }
-
-  testChk.addEventListener("change", update);
-  odiChk.addEventListener("change", update);
-  update();
+function getFormats() {
+  const formats = [];
+  if (document.getElementById("testChk")?.checked) formats.push("Test");
+  if (document.getElementById("odiChk")?.checked)  formats.push("ODI");
+  return formats;
 }
-drawScatter();
+
+function update() {
+  // Filter by selected formats (Test/ODI); country filter is handled in buildScatter
+  const subset = averages.filter(d => getFormats().includes(d.format));
+  buildScatter(subset, countryFilter);
+}
+
+export async function initScatter() {
+  const { averages: loaded } = await loadData();
+  averages = loaded;
+
+  // Wire up checkbox interactions
+  document.getElementById("testChk")?.addEventListener("change", update);
+  document.getElementById("odiChk")?.addEventListener("change", update);
+
+  // Listen for bar-chart country selection: { detail: { country: "India" } } or { country: null } to clear
+  window.addEventListener("countryFilter", (e) => {
+    countryFilter = e.detail?.country ?? null;
+    update();
+  });
+
+  update(); // initial draw
+}
+
+initScatter();

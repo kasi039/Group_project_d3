@@ -1,131 +1,205 @@
+// js/sankey.js
 import * as d3 from "https://cdn.skypack.dev/d3@7";
 import { sankey, sankeyLinkHorizontal } from "https://cdn.skypack.dev/d3-sankey@0.12";
 
-// Define team color map (customize as needed)
 const teamColors = {
-  "RCB": "#da1818",
-  "PBKS": "#ff4827ff",
-  "DC": "#17449b",
-  "MI": "#045093",
-  "CSK": "#f9cd05"
+  RCB: "#da1818",
+  PBKS: "#d71920",
+  DC:  "#17449b",
+  MI:  "#045093",
+  CSK: "#f9cd05"
 };
 
-d3.csv("data/most_runs_in_ipl.csv", d3.autoType).then(data => {
+let currentTeam = null;
+
+function dispatchTeam(team) {
+  currentTeam = team;
+  window.dispatchEvent(new CustomEvent("teamFilter", { detail: { team } }));
+}
+
+function renderLegend(teams) {
+  const legend = d3.select("#sankey-legend");
+  if (!legend.selectAll("span").empty()) return; 
+
+  legend.html(null);
+  teams.forEach(t => {
+    legend.append("span").attr("class", "box").style("background", teamColors[t] || "#888");
+    legend.append("span").text(t).style("margin-right", "12px");
+  });
+}
+
+
+d3.csv("data/most_runs_in_ipl.csv", d3.autoType).then(rows => {
+  const svg = d3.select("#sankey").html(null);
+  const width = +svg.attr("width");
+  const height = +svg.attr("height");
+  svg.attr("viewBox", [0, 0, width, height]);
+
+  // Group rows: Team -> [rows]
+  const byTeam = d3.group(rows, d => d.Team);
+  const teams = Array.from(byTeam.keys());
+  renderLegend(teams);
+
+  // Build Sankey nodes/links
+  // Team -> Player -> HS node chain
+  const nodeIndex = new Map();
   const nodes = [];
   const links = [];
 
-  const nodeMap = new Map();
-  const getNode = name => {
-    if (!nodeMap.has(name)) {
-      nodeMap.set(name, nodes.length);
+  const getIdx = (name) => {
+    if (!nodeIndex.has(name)) {
+      nodeIndex.set(name, nodes.length);
       nodes.push({ name });
     }
-    return nodeMap.get(name);
+    return nodeIndex.get(name);
   };
 
-  data.forEach(d => {
-    const team = d.Team;
-    const player = d.Player;
-    const score = String(d.Highest);
+  byTeam.forEach((teamRows, team) => {
+    const teamIdx = getIdx(team);
+    // group players within team
+    const byPlayer = d3.group(teamRows, d => d.Player);
+    byPlayer.forEach((playerRows, player) => {
+      const playerIdx = getIdx(player);
+      // team -> player link (value as count of entries or aggregate)
+      links.push({ source: teamIdx, target: playerIdx, value: playerRows.length });
 
-    const teamNode = getNode(team);
-    const playerNode = getNode(player);
-    const scoreNode = getNode(`HS: ${score}`);
-
-    links.push({ source: teamNode, target: playerNode, value: 1 });
-    links.push({ source: playerNode, target: scoreNode, value: 1 });
+      // add HS node for each player's highest score
+      const hsLabel = `HS: ${d3.max(playerRows, r => r.Highest)}`;
+      const hsIdx = getIdx(`${player} — ${hsLabel}`);
+      links.push({ source: playerIdx, target: hsIdx, value: 1 });
+    });
   });
 
-  const sankeyGen = sankey()
-    .nodeWidth(20)
-    .nodePadding(12)
-    .extent([[1, 1], [880, 580]]);
+  const topPad = 60; // room for title
+const sankeyGen = sankey()
+  .nodeWidth(20)
+  .nodePadding(12)
+  .extent([[1, topPad], [width - 2, height - 2]]);
+;
 
-  const sankeyData = sankeyGen({
-    nodes: nodes.map(d => Object.assign({}, d)),
-    links: links.map(d => Object.assign({}, d))
+  const graph = sankeyGen({
+    nodes: nodes.map(d => ({ ...d })),
+    links: links.map(d => ({ ...d }))
   });
 
-  const svg = d3.select("#sankey");
-  svg.selectAll("*").remove();
-
-  // Append gradients
+  // GRADIENTS for team nodes
   const defs = svg.append("defs");
-
-  sankeyData.nodes.forEach((d, i) => {
-    if (teamColors[d.name]) {
-      defs.append("linearGradient")
-        .attr("id", `grad-${i}`)
-        .attr("x1", "0%").attr("x2", "100%")
-        .attr("y1", "0%").attr("y2", "0%")
-        .selectAll("stop")
-        .data([
-          { offset: "0%", color: "#fff" },
-          { offset: "100%", color: teamColors[d.name] }
-        ])
-        .enter()
-        .append("stop")
-        .attr("offset", d => d.offset)
-        .attr("stop-color", d => d.color);
-    }
+  graph.nodes.forEach((n, i) => {
+    const col = teamColors[n.name];
+    if (!col) return;
+    const lg = defs.append("linearGradient")
+      .attr("id", `grad-${i}`)
+      .attr("x1", "0%").attr("x2", "100%")
+      .attr("y1", "0%").attr("y2", "0%");
+    lg.append("stop").attr("offset", "0%").attr("stop-color", "#fff");
+    lg.append("stop").attr("offset", "100%").attr("stop-color", col);
   });
 
-  // Draw nodes
-  svg.append("g")
-    .selectAll("rect")
-    .data(sankeyData.nodes)
+  // Links
+  const linkG = svg.append("g").attr("fill", "none").attr("stroke-opacity", 0.4);
+  const link = linkG.selectAll("path")
+    .data(graph.links)
+    .join("path")
+    .attr("d", sankeyLinkHorizontal())
+    .attr("stroke", "#bbb")
+    .attr("stroke-width", d => Math.max(1, d.width))
+    .on("mouseover", function (ev, d) {
+      // highlight path and connected nodes
+      link.transition().duration(150).attr("stroke-opacity", l => (l === d ? 0.9 : 0.1));
+      nodeRect.transition().duration(150).attr("opacity", n => (n === d.source || n === d.target ? 1 : 0.3));
+    })
+    .on("mouseout", () => {
+      if (currentTeam) return;
+      link.transition().duration(150).attr("stroke-opacity", 0.4);
+      nodeRect.transition().duration(150).attr("opacity", 1);
+    });
+
+  // Nodes
+  const nodeG = svg.append("g");
+  const nodeRect = nodeG.selectAll("rect")
+    .data(graph.nodes)
     .join("rect")
     .attr("x", d => d.x0)
     .attr("y", d => d.y0)
     .attr("height", d => d.y1 - d.y0)
     .attr("width", d => d.x1 - d.x0)
     .attr("fill", d => {
-      const color = teamColors[d.name];
-      const i = sankeyData.nodes.indexOf(d);
-      return color ? `url(#grad-${i})` : "#007acc";
+      const i = graph.nodes.indexOf(d);
+      const col = teamColors[d.name];
+      return col ? `url(#grad-${i})` : "#007acc";
     })
-    .attr("opacity", 0)
-    .transition()
-    .duration(1000)
-    .attr("opacity", 1);
+    .attr("opacity", 1)
+    .style("cursor", "pointer")
+    .on("mouseover", function (ev, d) {
+      // fade unrelated links
+      link.transition().duration(150).attr("stroke-opacity", l => (l.source === d || l.target === d ? 0.85 : 0.1));
+      nodeRect.transition().duration(150).attr("opacity", n => (n === d ? 1 : 0.4));
+    })
+    .on("mouseout", () => {
+      if (currentTeam) return;
+      link.transition().duration(150).attr("stroke-opacity", 0.4);
+      nodeRect.transition().duration(150).attr("opacity", 1);
+    })
+    .on("click", (ev, d) => {
+      // If a TEAM node is clicked (i.e., exactly matches one of the team names), toggle filter
+      const isTeam = teamColors[d.name];
+      const next = isTeam ? (currentTeam === d.name ? null : d.name) : null;
+      dispatchTeam(next);
 
-  // Draw links with animation
-  svg.append("g")
-    .attr("fill", "none")
-    .selectAll("path")
-    .data(sankeyData.links)
-    .join("path")
-    .attr("d", sankeyLinkHorizontal())
-    .attr("stroke", "#bbb")
-    .attr("stroke-width", 0)
-    .attr("opacity", 0.4)
-    .transition()
-    .duration(800)
-    .attr("stroke-width", d => Math.max(1, d.width));
+      // Dim everything not related to the selected team
+      if (next) {
+        nodeRect.transition().duration(200).attr("opacity", n => {
+          if (n.name === next) return 1;
+          // any node reachable from team?
+          const connected = graph.links.some(l => (l.source.name === next && (l.target === n || l.target.name.startsWith(n.name))));
+          return connected ? 1 : 0.12;
+        });
+        link.transition().duration(200).attr("stroke-opacity", l => (l.source.name === next ? 0.85 : 0.05));
+      } else {
+        nodeRect.transition().duration(200).attr("opacity", 1);
+        link.transition().duration(200).attr("stroke-opacity", 0.4);
+      }
+    });
 
-  // Add titles to nodes and links
-  svg.selectAll("rect")
-    .append("title")
-    .text(d => d.name);
-
-  svg.selectAll("path")
-    .append("title")
-    .text(d => `${d.source.name} → ${d.target.name}`);
-
-  // Add node labels
-  svg.append("g")
-    .selectAll("text")
-    .data(sankeyData.nodes)
+  // Labels
+  nodeG.selectAll("text")
+    .data(graph.nodes)
     .join("text")
-    .attr("x", d => d.x0 < 450 ? d.x1 + 6 : d.x0 - 6)
+    .attr("x", d => (d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6))
     .attr("y", d => (d.y0 + d.y1) / 2)
     .attr("dy", "0.35em")
-    .attr("text-anchor", d => d.x0 < 450 ? "start" : "end")
-    .text(d => d.name)
+    .attr("text-anchor", d => (d.x0 < width / 2 ? "start" : "end"))
     .style("font-size", "12px")
     .style("opacity", 0)
+    .text(d => d.name)
     .transition()
-    .delay(800)
-    .duration(500)
+    .delay(600)
+    .duration(400)
     .style("opacity", 1);
+
+  // Title
+  svg.append("text")
+    .attr("x", width / 2).attr("y", 24)
+    .attr("text-anchor", "middle")
+    .style("font-size", "20px")
+    .style("font-weight", 700)
+    .text("IPL Highest Scores — Team ➜ Player ➜ HS");
+
+  // React to external teamFilter (from Pie)
+  window.addEventListener("teamFilter", (e) => {
+    const team = e.detail?.team ?? null;
+    currentTeam = team;
+
+    if (team) {
+      nodeRect.transition().duration(200).attr("opacity", n => {
+        if (n.name === team) return 1;
+        const connected = graph.links.some(l => (l.source.name === team && (l.target === n || l.target.name.startsWith(n.name))));
+        return connected ? 1 : 0.12;
+      });
+      link.transition().duration(200).attr("stroke-opacity", l => (l.source.name === team ? 0.85 : 0.05));
+    } else {
+      nodeRect.transition().duration(200).attr("opacity", 1);
+      link.transition().duration(200).attr("stroke-opacity", 0.4);
+    }
+  });
 });

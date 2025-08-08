@@ -1,148 +1,116 @@
 // js/barChart.js
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
-export function buildBar(raw, field = "total") {
-  // 1. clear
+export function buildBar(raw, field = "total", onCountryClick) {
   const svg = d3.select("#bar").html(null);
 
-  // 2. dims & margin
   const W = 780, H = 600;
   const margin = { top: 40, right: 40, bottom: 80, left: 100 };
   const innerW = W - margin.left - margin.right;
-  const innerH = H - margin.top  - margin.bottom;
-  svg.attr("viewBox",[0,0,W,H]);
+  const innerH = H - margin.top - margin.bottom;
+  svg.attr("viewBox", [0, 0, W, H]);
 
   const g = svg.append("g")
-               .attr("transform", `translate(${margin.left},${margin.top})`);
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // 3. scales
   const maxVal = d3.max(raw, d => d[field]);
   const x = d3.scaleBand()
-              .domain(raw.map(d => d.country))
-              .range([0, innerW])
-              .padding(0.25);
+    .domain(raw.map(d => d.country))
+    .range([0, innerW])
+    .padding(0.25);
   const y = d3.scaleLinear()
-              .domain([0, maxVal]).nice()
-              .range([innerH, 0]);
+    .domain([0, maxVal]).nice()
+    .range([innerH, 0]);
   const colour = d3.scaleSequential()
-                   .domain([0, maxVal])
-                   .interpolator(d3.interpolateRainbow);
+    .domain([0, maxVal])
+    .interpolator(d3.interpolateRainbow);
 
-  // 4. gridlines
+  // Gridlines
   g.append("g")
-   .call(d3.axisLeft(y).tickSize(-innerW).tickFormat(""))
-   .selectAll("line")
-     .attr("stroke","#ddd")
-     .attr("stroke-dasharray","2,2");
+    .call(d3.axisLeft(y).tickSize(-innerW).tickFormat(""))
+    .selectAll("line")
+    .attr("stroke", "#ddd")
+    .attr("stroke-dasharray", "2,2");
 
-  // 5. axes
+  // Axes
   g.append("g").call(d3.axisLeft(y));
-  const xAxisG = g.append("g")
-    .attr("class","x-axis")
+  g.append("g")
+    .attr("class", "x-axis")
     .attr("transform", `translate(0,${innerH})`)
     .call(d3.axisBottom(x))
     .selectAll("text")
-      .attr("text-anchor","end")
-      .attr("transform","rotate(-25)");
+    .attr("text-anchor", "end")
+    .attr("transform", "rotate(-25)");
 
-  // 6. axis labels
+  // Axis labels
   g.append("text")
-    .attr("class","axis-label")
-    .attr("x",-innerH/2)
-    .attr("y",-margin.left+20)
-    .attr("transform","rotate(-90)")
-    .attr("text-anchor","middle")
-    .style("font-size","14px")
-    .style("font-weight",600)
-    .text(field === "total"
-      ? "Total ICC Trophies"
-      : {
-          odi_wc: "ODI WC wins",
-          t20_wc: "T20 WC wins",
-          champions_trophy: "Champions Trophy",
-          wts: "World Test Series"
-        }[field]
+    .attr("class", "axis-label")
+    .attr("x", -innerH / 2)
+    .attr("y", -margin.left + 20)
+    .attr("transform", "rotate(-90)")
+    .attr("text-anchor", "middle")
+    .style("font-size", "14px")
+    .style("font-weight", 600)
+    .text(field === "total" ? "Total ICC Trophies" :
+      {
+        odi_wc: "ODI WC wins",
+        t20_wc: "T20 WC wins",
+        champions_trophy: "Champions Trophy",
+        wts: "World Test Series"
+      }[field]
     );
 
   g.append("text")
-    .attr("class","axis-label")
-    .attr("x", innerW/2)
-    .attr("y", innerH+60)
-    .attr("text-anchor","middle")
-    .style("font-size","14px")
-    .style("font-weight",600)
+    .attr("class", "axis-label")
+    .attr("x", innerW / 2)
+    .attr("y", innerH + 60)
+    .attr("text-anchor", "middle")
+    .style("font-size", "14px")
+    .style("font-weight", 600)
     .text("Country");
 
-  // 7. tooltip element
+  // Tooltip
   const tip = svg.append("text")
-    .attr("class","bar-tooltip")
-    .attr("text-anchor","middle")
-    .style("opacity",0);
+    .attr("class", "bar-tooltip")
+    .attr("text-anchor", "middle")
+    .style("opacity", 0);
 
-  // 8. bars with click-to-sort
-  let ascending = false;
-  function sortAndRedraw() {
-    ascending = !ascending;
-    const sorted = raw.slice().sort((a,b) =>
-      ascending ? a[field] - b[field] : b[field] - a[field]
-    );
-    x.domain(sorted.map(d=>d.country));
-    const t = svg.transition().duration(800);
-
-    // update axis
-    g.select(".x-axis")
-      .transition(t)
-      .call(d3.axisBottom(x))
-      .selectAll("text")
-        .attr("text-anchor","end")
-        .attr("transform","rotate(-25)");
-
-    // update bars
-    g.selectAll("rect")
-      .data(sorted, d=>d.country)
-      .order()
-      .transition(t)
-        .attr("x", d=> x(d.country));
-  }
-
+  // Bars
   g.selectAll("rect")
-    .data(raw, d=>d.country)
+    .data(raw, d => d.country)
     .join("rect")
-      .attr("x", d=> x(d.country))
-      .attr("width", x.bandwidth())
-      .attr("y", innerH)
-      .attr("height", 0)
-      .attr("fill", d=> colour(d[field]))
-    .transition().duration(800)
-      .attr("y", d=> y(d[field]))
-      .attr("height", d=> innerH - y(d[field]))
-    .on("mouseover", (e,d) => {
+    .attr("x", d => x(d.country))
+    .attr("width", x.bandwidth())
+    .attr("y", innerH)
+    .attr("height", 0)
+    .attr("fill", d => colour(d[field]))
+    .on("mouseover", (e, d) => {
       d3.select(e.currentTarget)
-        .attr("stroke","#333").attr("stroke-width",1.5);
-      const xp = margin.left + x(d.country) + x.bandwidth()/2;
+        .attr("stroke", "#000")
+        .attr("stroke-width", 2);
+      const xp = margin.left + x(d.country) + x.bandwidth() / 2;
       const yp = margin.top + y(d[field]) - 10;
       tip.attr("x", xp).attr("y", yp)
-         .text(d[field])
-         .transition().duration(200)
-         .style("opacity",1);
+        .text(`${d.country}: ${d[field]}`)
+        .transition().duration(200)
+        .style("opacity", 1);
     })
-    .on("mouseout", (e,d) => {
+    .on("mouseout", (e, d) => {
       d3.select(e.currentTarget).attr("stroke", null);
-      tip.transition().duration(200).style("opacity",0);
+      tip.transition().duration(200).style("opacity", 0);
     })
-    .on("click", sortAndRedraw);
+    .on("click", (e, d) => {
+      if (onCountryClick) onCountryClick(d.country);
+    })
+    .transition().duration(800)
+    .attr("y", d => y(d[field]))
+    .attr("height", d => innerH - y(d[field]));
 
-  // 9. title
+  // Title
   svg.append("text")
-    .attr("x",W/2).attr("y",24)
-    .attr("text-anchor","middle")
-    .style("font-size","22px")
-    .style("font-weight",700)
-    .text(`ICC Trophies by Country (${{
-      total: "Total",
-      odi_wc: "ODI WC",
-      t20_wc: "T20 WC",
-      champions_trophy: "Champions Trophy",
-      wts: "World Test Series"
-    }[field]})`);
+    .attr("x", W / 2).attr("y", 24)
+    .attr("text-anchor", "middle")
+    .style("font-size", "22px")
+    .style("font-weight", 700)
+    .text(`ICC Trophies by Country`);
 }

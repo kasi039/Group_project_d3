@@ -1,17 +1,23 @@
 // js/bar.js
 import { loadData } from "./main.js";
-import { buildBar }  from "./barChart.js";
+import { buildBar } from "./barChart.js";
+import { buildScatter } from "./scatterChart.js";
 
-export async function drawBar() {
-  const { trophies } = await loadData();
+export async function drawBarAndScatter() {
+  const { trophies, averages } = await loadData();
   const filter = document.getElementById("trophyFilter");
 
-  function update() {
-    buildBar(trophies, filter.value);
+  function updateScatter(country = null) {
+    buildScatter(averages, country);
   }
 
-  filter.addEventListener("change", update);
-  update();  // initial draw
+  function updateBar() {
+    buildBar(trophies, filter.value, updateScatter);
+  }
+
+  filter.addEventListener("change", updateBar);
+  updateBar();
+  updateScatter();
 }
 
-drawBar();
+drawBarAndScatter();

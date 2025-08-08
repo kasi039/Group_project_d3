@@ -1,6 +1,4 @@
-/* ------------------------------------------------------------
-   Base Layout & Typography
------------------------------------------------------------- */
+
 body {
   font-family: "Segoe UI", sans-serif;
   margin: 0;
@@ -8,12 +6,7 @@ body {
   background: #f5f7fa;
 }
 
-/* ------------------------------------------------------------
-   Navigation Bar
------------------------------------------------------------- */
-/* ------------------------------------------------------------
-   Enhanced Navigation Bar
------------------------------------------------------------- */
+
 nav {
   display: flex;
   justify-content: center;
@@ -58,9 +51,7 @@ nav button.active::after {
   border-radius: 2px;
 }
 
-/* ------------------------------------------------------------
-   SVG Containers
------------------------------------------------------------- */
+
 svg {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
   border-radius: 12px;
@@ -68,9 +59,7 @@ svg {
   margin-top: 12px;
 }
 
-/* ------------------------------------------------------------
-   Controls (Dropdowns, Checkboxes, Instructions)
------------------------------------------------------------- */
+
 .controls {
   text-align: center;
   margin: 12px 0;
@@ -89,17 +78,17 @@ svg {
   border: 1px solid #ccc;
 }
 
-/* ------------------------------------------------------------
-   Legends
------------------------------------------------------------- */
+
 #scatter-legend,
-#pie-legend {
+#pie-legend,
+#sankey-legend {
   margin-top: 6px;
   text-align: center;
   font-size: 13px;
 }
 #scatter-legend .box,
-#pie-legend .box {
+#pie-legend .box,
+#sankey-legend .box {
   display: inline-block;
   width: 12px;
   height: 12px;
@@ -108,10 +97,8 @@ svg {
   border-radius: 2px;
 }
 
-/* ------------------------------------------------------------
-   Tooltips
------------------------------------------------------------- */
-/* Bar and scatter tooltips (text elements) */
+
+
 .bar-tooltip,
 .scatter-tooltip text {
   pointer-events: none;
@@ -120,7 +107,7 @@ svg {
   font-size: 12px;
   font-weight: 600;
 }
-/* Sankey & Pie tooltips (g groups containing rect+text) */
+
 .sankey-tooltip text,
 .pie-tooltip text {
   pointer-events: none;
@@ -135,9 +122,7 @@ svg {
   ry: 4;
 }
 
-/* ------------------------------------------------------------
-   Interactivity Cursors & Highlighting
------------------------------------------------------------- */
+
 svg rect:hover,
 svg circle:hover,
 svg path:hover {
