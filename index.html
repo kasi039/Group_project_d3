@@ -8,12 +8,11 @@
 </head>
 <body>
   <nav>
-  <button data-view="bar" class="active">ICC Trophies</button>
-  <button data-view="scatter">Batting Averages</button>
-  <button data-view="sankey">IPL Highest Scores</button>
-  <button data-view="pie">IPL Runs by Team</button>
-</nav>
-
+    <button data-view="bar" class="active">ICC Trophies</button>
+    <button data-view="scatter">Batting Averages</button>
+    <button data-view="sankey">IPL Highest Scores</button>
+    <button data-view="pie">IPL Runs by Team</button>
+  </nav>
 
   <!-- Bar Chart Controls -->
   <div id="bar-controls" class="controls">
@@ -31,7 +30,7 @@
   <div id="scatter-controls" class="controls">
     <label>Show format:</label>
     <input type="checkbox" id="testChk" checked> <label for="testChk">Test</label>
-    <input type="checkbox" id="odiChk"  checked> <label for="odiChk">ODI</label>
+    <input type="checkbox" id="odiChk" checked> <label for="odiChk">ODI</label>
   </div>
 
   <!-- Sankey Chart Controls -->
@@ -45,12 +44,13 @@
   </div>
 
   <!-- SVG Canvases -->
-  <svg id="bar"     width="780" height="600"></svg>
+  <svg id="bar" width="780" height="600"></svg>
   <svg id="scatter" width="780" height="600"></svg>
-  <svg id="sankey"  width="900" height="600"></svg>
-  <svg id="pie"     width="780" height="600"></svg>
   <div id="scatter-legend"></div>
-  
+  <svg id="sankey" width="900" height="600"></svg>
+  <div id="sankey-legend"></div>
+  <svg id="pie" width="780" height="600"></svg>
+  <div id="pie-legend"></div>
 
   <!-- Module Scripts -->
   <script type="module" src="js/bar.js"></script>
@@ -60,24 +60,25 @@
 
   <!-- View Toggle Logic -->
   <script>
-  const views = ["bar","scatter","sankey","pie"];
-  document.querySelectorAll('nav button').forEach(btn => {
-    btn.onclick = () => {
-      const v = btn.dataset.view;
-      // show/hide charts & controls
-      views.forEach(view => {
-        document.getElementById(view).style.display = view===v ? "" : "none";
-        const ctrl = document.getElementById(view+"-controls");
-        if(ctrl) ctrl.style.display = view===v ? "" : "none";
-      });
-      // update active button styling
-      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    };
-  });
-  window.addEventListener("DOMContentLoaded", () => {
-    document.querySelector('button[data-view="bar"]').click();
-  });
-</script>
+    const views = ["bar", "scatter", "sankey", "pie"];
+    document.querySelectorAll('nav button').forEach(btn => {
+      btn.onclick = () => {
+        const v = btn.dataset.view;
+        views.forEach(view => {
+          document.getElementById(view).style.display = view === v ? "" : "none";
+          const ctrl = document.getElementById(view + "-controls");
+          if (ctrl) ctrl.style.display = view === v ? "" : "none";
+          // Hide/show legends based on view
+          const legend = document.getElementById(view + "-legend");
+          if (legend) legend.style.display = view === v ? "" : "none";
+        });
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      };
+    });
+    window.addEventListener("DOMContentLoaded", () => {
+      document.querySelector('button[data-view="bar"]').click();
+    });
+  </script>
 </body>
 </html>

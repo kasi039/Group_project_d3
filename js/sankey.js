@@ -5,8 +5,8 @@ import { sankey, sankeyLinkHorizontal } from "https://cdn.skypack.dev/d3-sankey@
 const teamColors = {
   RCB: "#da1818",
   PBKS: "#d71920",
-  DC:  "#17449b",
-  MI:  "#045093",
+  DC: "#17449b",
+  MI: "#045093",
   CSK: "#f9cd05"
 };
 
@@ -19,7 +19,7 @@ function dispatchTeam(team) {
 
 function renderLegend(teams) {
   const legend = d3.select("#sankey-legend");
-  if (!legend.selectAll("span").empty()) return; 
+  if (!legend.selectAll("span").empty()) return;
 
   legend.html(null);
   teams.forEach(t => {
@@ -28,20 +28,16 @@ function renderLegend(teams) {
   });
 }
 
-
 d3.csv("data/most_runs_in_ipl.csv", d3.autoType).then(rows => {
   const svg = d3.select("#sankey").html(null);
   const width = +svg.attr("width");
   const height = +svg.attr("height");
   svg.attr("viewBox", [0, 0, width, height]);
 
-  // Group rows: Team -> [rows]
   const byTeam = d3.group(rows, d => d.Team);
   const teams = Array.from(byTeam.keys());
   renderLegend(teams);
 
-  // Build Sankey nodes/links
- 
   const nodeIndex = new Map();
   const nodes = [];
   const links = [];
@@ -56,7 +52,6 @@ d3.csv("data/most_runs_in_ipl.csv", d3.autoType).then(rows => {
 
   byTeam.forEach((teamRows, team) => {
     const teamIdx = getIdx(team);
-    // group players within team
     const byPlayer = d3.group(teamRows, d => d.Player);
     byPlayer.forEach((playerRows, player) => {
       const playerIdx = getIdx(player);
@@ -67,19 +62,17 @@ d3.csv("data/most_runs_in_ipl.csv", d3.autoType).then(rows => {
     });
   });
 
-  const topPad = 60; 
-const sankeyGen = sankey()
-  .nodeWidth(20)
-  .nodePadding(12)
-  .extent([[1, topPad], [width - 2, height - 2]]);
-;
+  const topPad = 60;
+  const sankeyGen = sankey()
+    .nodeWidth(20)
+    .nodePadding(12)
+    .extent([[1, topPad], [width - 2, height - 2]]);
 
   const graph = sankeyGen({
     nodes: nodes.map(d => ({ ...d })),
     links: links.map(d => ({ ...d }))
   });
 
-  // GRADIENTS for team nodes
   const defs = svg.append("defs");
   graph.nodes.forEach((n, i) => {
     const col = teamColors[n.name];
@@ -92,7 +85,6 @@ const sankeyGen = sankey()
     lg.append("stop").attr("offset", "100%").attr("stop-color", col);
   });
 
-  // Links
   const linkG = svg.append("g").attr("fill", "none").attr("stroke-opacity", 0.4);
   const link = linkG.selectAll("path")
     .data(graph.links)
@@ -110,7 +102,6 @@ const sankeyGen = sankey()
       nodeRect.transition().duration(150).attr("opacity", 1);
     });
 
-  // Nodes
   const nodeG = svg.append("g");
   const nodeRect = nodeG.selectAll("rect")
     .data(graph.nodes)
@@ -127,7 +118,6 @@ const sankeyGen = sankey()
     .attr("opacity", 1)
     .style("cursor", "pointer")
     .on("mouseover", function (ev, d) {
-      // fade unrelated links
       link.transition().duration(150).attr("stroke-opacity", l => (l.source === d || l.target === d ? 0.85 : 0.1));
       nodeRect.transition().duration(150).attr("opacity", n => (n === d ? 1 : 0.4));
     })
@@ -137,16 +127,12 @@ const sankeyGen = sankey()
       nodeRect.transition().duration(150).attr("opacity", 1);
     })
     .on("click", (ev, d) => {
-      // If a TEAM node is clicked 
       const isTeam = teamColors[d.name];
       const next = isTeam ? (currentTeam === d.name ? null : d.name) : null;
       dispatchTeam(next);
-
-      // Dim everything not related to the selected team
       if (next) {
         nodeRect.transition().duration(200).attr("opacity", n => {
           if (n.name === next) return 1;
-          // any node reachable from team?
           const connected = graph.links.some(l => (l.source.name === next && (l.target === n || l.target.name.startsWith(n.name))));
           return connected ? 1 : 0.12;
         });
@@ -157,7 +143,6 @@ const sankeyGen = sankey()
       }
     });
 
-  // Labels
   nodeG.selectAll("text")
     .data(graph.nodes)
     .join("text")
@@ -173,7 +158,6 @@ const sankeyGen = sankey()
     .duration(400)
     .style("opacity", 1);
 
-  // Title
   svg.append("text")
     .attr("x", width / 2).attr("y", 24)
     .attr("text-anchor", "middle")
@@ -181,11 +165,9 @@ const sankeyGen = sankey()
     .style("font-weight", 700)
     .text("IPL Highest Scores — Team ➜ Player ➜ HS");
 
-  // React to external teamFilter (from Pie)
   window.addEventListener("teamFilter", (e) => {
     const team = e.detail?.team ?? null;
     currentTeam = team;
-
     if (team) {
       nodeRect.transition().duration(200).attr("opacity", n => {
         if (n.name === team) return 1;

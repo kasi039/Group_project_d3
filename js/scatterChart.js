@@ -75,14 +75,15 @@ export function buildScatter(raw, filterCountry = null) {
         .style("display", null);
     })
     .on("mouseout", () => tip.style("display", "none"));
+
+  // Legend (unchanged, as you want to keep it)
+  const legend = d3.select("#scatter-legend").html(null);
+  ["Test", "ODI"].forEach(fmt => {
+    legend.append("span")
+      .attr("class", "box")
+      .style("background", fmt === "ODI" ? "#ff7f0e" : "#1f77b4");
+    legend.append("span")
+      .text(fmt)
+      .style("margin-right", "12px");
+  });
 }
-// legend
-const legend = d3.select("#scatter-legend").html(null);
-["Test","ODI"].forEach(fmt=>{
-  legend.append("span")
-    .attr("class","box")
-    .style("background", fmt==="ODI" ? "#ff7f0e" : "#1f77b4");
-  legend.append("span")
-    .text(fmt)
-    .style("margin-right","12px");
-});
