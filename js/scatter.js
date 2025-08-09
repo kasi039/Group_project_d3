@@ -3,8 +3,7 @@ import { loadData } from "./main.js";
 import { buildScatter } from "./scatterChart.js";
 
 let averages = [];
-let countryFilter = null; // set via bar chart clicks
-
+let countryFilter = null; 
 function getFormats() {
   const formats = [];
   if (document.getElementById("testChk")?.checked) formats.push("Test");
@@ -26,13 +25,13 @@ export async function initScatter() {
   document.getElementById("testChk")?.addEventListener("change", update);
   document.getElementById("odiChk")?.addEventListener("change", update);
 
-  // Listen for bar-chart country selection: { detail: { country: "India" } } or { country: null } to clear
+  // Listen for bar-chart country selection
   window.addEventListener("countryFilter", (e) => {
     countryFilter = e.detail?.country ?? null;
     update();
   });
 
-  update(); // initial draw
+  update(); 
 }
 
 initScatter();

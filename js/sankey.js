@@ -41,7 +41,7 @@ d3.csv("data/most_runs_in_ipl.csv", d3.autoType).then(rows => {
   renderLegend(teams);
 
   // Build Sankey nodes/links
-  // Team -> Player -> HS node chain
+ 
   const nodeIndex = new Map();
   const nodes = [];
   const links = [];
@@ -60,17 +60,14 @@ d3.csv("data/most_runs_in_ipl.csv", d3.autoType).then(rows => {
     const byPlayer = d3.group(teamRows, d => d.Player);
     byPlayer.forEach((playerRows, player) => {
       const playerIdx = getIdx(player);
-      // team -> player link (value as count of entries or aggregate)
       links.push({ source: teamIdx, target: playerIdx, value: playerRows.length });
-
-      // add HS node for each player's highest score
       const hsLabel = `HS: ${d3.max(playerRows, r => r.Highest)}`;
       const hsIdx = getIdx(`${player} — ${hsLabel}`);
       links.push({ source: playerIdx, target: hsIdx, value: 1 });
     });
   });
 
-  const topPad = 60; // room for title
+  const topPad = 60; 
 const sankeyGen = sankey()
   .nodeWidth(20)
   .nodePadding(12)
@@ -104,7 +101,6 @@ const sankeyGen = sankey()
     .attr("stroke", "#bbb")
     .attr("stroke-width", d => Math.max(1, d.width))
     .on("mouseover", function (ev, d) {
-      // highlight path and connected nodes
       link.transition().duration(150).attr("stroke-opacity", l => (l === d ? 0.9 : 0.1));
       nodeRect.transition().duration(150).attr("opacity", n => (n === d.source || n === d.target ? 1 : 0.3));
     })
@@ -141,7 +137,7 @@ const sankeyGen = sankey()
       nodeRect.transition().duration(150).attr("opacity", 1);
     })
     .on("click", (ev, d) => {
-      // If a TEAM node is clicked (i.e., exactly matches one of the team names), toggle filter
+      // If a TEAM node is clicked 
       const isTeam = teamColors[d.name];
       const next = isTeam ? (currentTeam === d.name ? null : d.name) : null;
       dispatchTeam(next);

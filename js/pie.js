@@ -25,7 +25,7 @@ d3.csv("data/most_runs_in_ipl.csv", d3.autoType).then(data => {
     v => d3.sum(v, d => d.Runs),
     d => d.Team
   );
-  const entries = Array.from(teamRuns.entries()); // [ [team, runs], ... ]
+  const entries = Array.from(teamRuns.entries()); 
 
   // Scales & layout
   const pie = d3.pie().value(d => d[1]).sort(null);
@@ -38,7 +38,7 @@ d3.csv("data/most_runs_in_ipl.csv", d3.autoType).then(data => {
   const tipText = tip.append("text").attr("x", 6).attr("y", 14).style("font-weight", 600);
 
   // State
-  let selectedTeam = null; // or string like "RCB"
+  let selectedTeam = null; 
 
   // Helpers
   function color(team) { return teamColors[team] || "#ccc"; }
@@ -66,7 +66,7 @@ d3.csv("data/most_runs_in_ipl.csv", d3.autoType).then(data => {
       })
     );
 
-  // Labels (optional—kept light so they don’t clutter)
+  // Labels 
   g.selectAll("text.label")
     .data(arcs, d => d.data[0])
     .join("text")
